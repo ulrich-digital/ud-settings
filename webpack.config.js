@@ -11,6 +11,8 @@ module.exports = {
 
 	"options/block-visibility/editor-script":
 		"./src/options/block-visibility/editor.js",
+	"options/editor-help/dashboard-script":
+		"./src/options/editor-help/dashboard.js",
 	},
 
 	output: {

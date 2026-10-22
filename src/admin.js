@@ -1,3 +1,4 @@
+import StatusNotice, { consumeSavedNotice } from "./components/status-notice";
 import { createRoot, useState } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 
@@ -6,6 +7,9 @@ import BlockVisibilityOption from "./options/block-visibility/edit";
 import CommentsOption from "./options/comments/edit";
 import MediaSettingsOption from "./options/media-settings/edit";
 import RevisionsOption from "./options/revisions/edit";
+import EditorCleanupOption from "./options/editor-cleanup/edit";
+import EditorHelpOption from "./options/editor-help/edit";
+import EditorInserterOption from "./options/editor-inserter/edit";
 
 const OPTIONS = [
 	{
@@ -14,7 +18,7 @@ const OPTIONS = [
 		description: __("Admin-Bar und Dashboard vereinfachen.", "ud-settings"),
 		component: AdminCleanupOption,
 	},
-		{
+	{
 		id: "comments",
 		label: __("Kommentare", "ud-settings"),
 		description: __(
@@ -26,10 +30,7 @@ const OPTIONS = [
 	{
 		id: "revisions",
 		label: __("Revisionen", "ud-settings"),
-		description: __(
-			"Alte WordPress-Revisionen bereinigen.",
-			"ud-settings"
-		),
+		description: __("Alte WordPress-Revisionen bereinigen.", "ud-settings"),
 		component: RevisionsOption,
 	},
 	{
@@ -37,7 +38,8 @@ const OPTIONS = [
 		label: __("Medien", "ud-settings"),
 		description: __("Uploads und Bildverarbeitung steuern.", "ud-settings"),
 		component: MediaSettingsOption,
-	},{
+	},
+	{
 		id: "block-visibility",
 		label: __("Block-Sichtbarkeit", "ud-settings"),
 		description: __(
@@ -46,12 +48,53 @@ const OPTIONS = [
 		),
 		component: BlockVisibilityOption,
 	},
-
-
+	{
+	id: "editor-cleanup",
+	label: __("Editor-Bereinigung", "ud-settings"),
+	description: __(
+		"Werkzeuge und Formatierungsoptionen im Editor ausblenden.",
+		"ud-settings"
+	),
+	component: EditorCleanupOption,
+},
+	{
+		id: "editor-inserter",
+		label: __("Editor-Inserter", "ud-settings"),
+		description: __(
+			"Vorlagen und Medienquellen im Inserter einschränken.",
+			"ud-settings"
+		),
+		component: EditorInserterOption,
+	},
+	{
+		id: "editor-help",
+		label: __("Redaktionshilfe", "ud-settings"),
+		description: __(
+			"Eine Kurzanleitung im WordPress-Dashboard bereitstellen.",
+			"ud-settings"
+		),
+		component: EditorHelpOption,
+	},
 ];
 
+function getInitialActiveOption() {
+	const hash = window.location.hash.replace("#", "");
+
+	if (OPTIONS.some((option) => option.id === hash)) {
+		return hash;
+	}
+
+	return "admin-cleanup";
+}
+
 function AdminApp() {
-	const [activeOption, setActiveOption] = useState("admin-cleanup");
+	const [savedNotice, setSavedNotice] = useState(consumeSavedNotice);
+	const [activeOption, setActiveOption] = useState(getInitialActiveOption);
+
+	const changeActiveOption = (optionId) => {
+		setActiveOption(optionId);
+		window.history.replaceState(null, "", `#${optionId}`);
+	};
 
 	const currentOption =
 		OPTIONS.find((option) => option.id === activeOption) || OPTIONS[0];
@@ -60,26 +103,10 @@ function AdminApp() {
 
 	return (
 		<div className="ud-settings-app">
-			<div className="ud-settings-app__header">
-				<p className="ud-settings-app__eyebrow">
-					{__("WordPress", "ud-settings")}
-				</p>
-
-				<h1 className="ud-settings-app__title">
-					{__("UD Settings", "ud-settings")}
-				</h1>
-
-				<p className="ud-settings-app__intro">
-					{__(
-						"Zentrale Einstellungen für WordPress-Projekte.",
-						"ud-settings"
-					)}
-				</p>
-			</div>
-
-			<div className="ud-settings-app__layout">
+			{savedNotice && <StatusNotice status="success" onRemove={() => setSavedNotice(false)}>{__("Änderungen gespeichert.", "ud-settings")}</StatusNotice>}
+			<div className="app-layout">
 				<nav
-					className="ud-settings-app__nav"
+					className="app-nav"
 					aria-label={__("UD Settings Navigation", "ud-settings")}
 				>
 					{OPTIONS.map((option) => {
@@ -87,20 +114,15 @@ function AdminApp() {
 
 						return (
 							<button
-								className={
-									isActive
-										? "ud-settings-app__nav-item is-active"
-										: "ud-settings-app__nav-item"
-								}
+								className={isActive ? "nav-item is-active" : "nav-item"}
 								type="button"
-								onClick={() => setActiveOption(option.id)}
+								aria-current={isActive ? "page" : undefined}
+								onClick={() => changeActiveOption(option.id)}
 								key={option.id}
 							>
-								<span className="ud-settings-app__nav-title">
-									{option.label}
-								</span>
+								<span className="nav-title">{option.label}</span>
 
-								<span className="ud-settings-app__nav-description">
+								<span className="nav-description">
 									{option.description}
 								</span>
 							</button>
@@ -108,7 +130,7 @@ function AdminApp() {
 					})}
 				</nav>
 
-				<main className="ud-settings-app__content">
+				<main className="app-content">
 					<CurrentComponent />
 				</main>
 			</div>
